@@ -1,0 +1,24 @@
+{
+    "name": "pacif-coder/thumb-on-demand",
+    "description": "Create thumbnails of images on the fly",
+    "type": "library",
+    "license": "BSD-3",
+    "authors": [
+        {
+            "name": "Pacif Coder",
+            "email": "pacif.coder@gmail.com"
+        }
+    ],
+    "minimum-stability": "alpha",
+    "require": {
+        "yiisoft/yii2-imagine": "^2.2"
+    },
+    
+    "autoload": {
+        "psr-4": {
+            "ThumbOnDemand\\": "lib"
+        }
+    }    
+}
+
+
