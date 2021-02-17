@@ -40,25 +40,18 @@ class UploadImage extends \yii\bootstrap\InputWidget
             $this->field->addErrorClassIfNeeded($this->options);
         }
 
+        $id = Html::getInputId($this->model, $this->attribute);
         $name = Html::getInputName($this->model, $this->attribute);
-        $hidden = Html::hiddenInput($name, '', ['disabled' => 'disabled']);
-        $file = Html::fileInput($name);
+
+        $attrs = ['disabled' => 'disabled', 'id' => self::getDeleteInputID($id)];
+        $hidden = Html::hiddenInput($name, '', $attrs);
+        $file = Html::fileInput($name, null, ['id' => $id]);
 
         $select = Html::tag('span', 'Выберите файл', ['class' => 'select-image']);
         $label = Html::tag('label', $select . $hidden . $file, ['for' => $this->getId()]);
 
-        if ($this->altAttr) {
-            $altAttr = $this->altAttr;
-            $name = Html::getInputName($this->model, $this->altAttr);
-            $alt = $this->model->{$altAttr};
-        } else {
-            $alt = '';
-            $name = null;
-        }
-        $textarea = Html::textarea($name, $alt, ['data-role' => 'alt']);
-
         $attrs = ['class' => 'select-panel-content'];
-        $content = Html::tag('div', $label . $textarea, $attrs);
+        $content = Html::tag('div', $label, $attrs);
 
         $str = '';
         $str .= Html::tag('div', $content, ['class' => 'select-panel']);
@@ -68,8 +61,15 @@ class UploadImage extends \yii\bootstrap\InputWidget
         $thumb = $this->getThumb($originUrl, $thumbUrl);
         $str .= Html::tag('div', $thumb, ['class' => 'single-image']);
 
-        $attrs = ['data-role' => 'thumb-on-demand-upload-image',
-            'class' => 'thumb-on-demand-upload-image clearfix'];
+        $attrs = [
+            'data-role' => 'thumb-on-demand-upload-image',
+            'class' => 'thumb-on-demand-upload-image clearfix',
+        ];
+
+        if ($this->altAttr) {
+            $id = Html::getInputId($this->model, $this->altAttr);
+            $attrs['data-alt-attr-input'] = $id;
+        }
 
         if ($this->multiple) {
             Html::addCssClass($attrs, 'multiple');
@@ -116,5 +116,10 @@ class UploadImage extends \yii\bootstrap\InputWidget
 
         $attrs = ['class' => 'tools clearfix'];
         return Html::tag('div', $icons, $attrs);
+    }
+
+    public static function getDeleteInputID($id)
+    {
+        return "_thumb-on-demand-upload-image__delete-input_{$id}";
     }
 }

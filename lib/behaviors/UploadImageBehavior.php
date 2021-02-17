@@ -12,13 +12,13 @@ class UploadImageBehavior extends \yii\base\Behavior
 {
     public $attr;
 
-    public $altAttr = 'alt';
+    public $altAttr;
 
-    public $widthAttr = 'width';
+    public $widthAttr;
 
-    public $heightAttr = 'height';
+    public $heightAttr;
 
-    public $filesizeAttr = 'filesize';
+    public $filesizeAttr;
 
     protected $files = [];
 
@@ -126,7 +126,9 @@ class UploadImageBehavior extends \yii\base\Behavior
 
         if ($withAlt && $this->altAttr) {
             $ownerAttr = $this->altAttr;
-            $this->owner->{$ownerAttr} = pathinfo($path, PATHINFO_FILENAME);
+            if (null === $this->owner->{$ownerAttr}) {
+                $this->owner->{$ownerAttr} = pathinfo($path, PATHINFO_FILENAME);
+            }
         }
 
         if (!$this->widthAttr && !$this->heightAttr) {
