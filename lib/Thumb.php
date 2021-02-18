@@ -130,7 +130,11 @@ class Thumb extends BaseObject
         $path = $this->_addWebRoot($url);
 
         $this->_saveUploaded($uploadedFile, $path);
+        $this->_forceCreateThumb($object, $attr, $path);
+    }
 
+    protected function _forceCreateThumb($object, $attr, $path)
+    {
         foreach ($this->presets as $preset => $desc) {
             if (!$this->_isForceCreate($object, $desc)) {
                 continue;
@@ -164,9 +168,12 @@ class Thumb extends BaseObject
 
         FileHelper::createDirectory(dirname($destPath));
         $this->_saveFile($path, $destPath);
+
+        $this->_forceCreateThumb($object, $attr, $path);
     }
 
-    protected function _saveFile($source, $dest) {
+    protected function _saveFile($source, $dest)
+    {
         $imagine = Image::getImagine();
 
         $originOptions = [];
@@ -382,7 +389,7 @@ class Thumb extends BaseObject
                     break;
 
                 case 'file':
-                    $value = $ext?
+                    $value = $ext ?
                         pathinfo($file, PATHINFO_FILENAME) . '.' . $ext
                         :
                         basename($file);
@@ -393,7 +400,7 @@ class Thumb extends BaseObject
                     break;
 
                 case 'extension':
-                    $value = $ext? $ext : pathinfo($file, PATHINFO_EXTENSION);
+                    $value = $ext ? $ext : pathinfo($file, PATHINFO_EXTENSION);
                     break;
 
                 default:
