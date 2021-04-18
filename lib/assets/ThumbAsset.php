@@ -6,16 +6,12 @@ use yii\bootstrap\BootstrapAsset;
 /**
  *
  */
-class UploadImageAsset extends \yii\web\AssetBundle
+class ThumbAsset extends \yii\web\AssetBundle
 {
-    public $sourcePath = __DIR__ . '/upload-image';
+    public $sourcePath = __DIR__ . '/thumb';
 
     public $css = [
-        'upload-image.css',
-    ];
-
-    public $js = [
-        'upload-image.js',
+        'thumb.css',
     ];
 
     public $depends = [
