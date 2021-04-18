@@ -1,0 +1,3 @@
+.matrix-grid-view .thumb-on-demand .thumb .title div.text { cursor: default; }
+.matrix-grid-view.thumb-on-demand-select-on-click .thumb { cursor: pointer; }
+.matrix-grid-view .state-selected { background: #fbf9ee; }

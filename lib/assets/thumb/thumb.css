@@ -1,0 +1,11 @@
+.thumb-on-demand .thumb { display: inline-block; box-sizing: border-box; padding: 6px; margin: 0 2px 2px 0; text-align: center; border: 1px solid #f0f0f0; border-radius: 4px; width: 143px; height: 195px; }
+.thumb-on-demand .thumb .glyphicon { cursor: pointer; }
+.thumb-on-demand .thumb .img { display: table-cell; vertical-align: middle; text-align: center; width: 130px; height: 130px; }
+.thumb-on-demand .thumb .img img { padding: 2px; border: 1px solid #dedede; max-width: 124px; max-height: 124px; }
+.thumb-on-demand .thumb .title { height: 2.2em; width: 124px; position: relative; }
+.thumb-on-demand .thumb .title div.text { top: 0; left: 0; position: absolute; text-align: center; height: 2.2em; line-height: 120%; width: 100%; display: block; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+.thumb-on-demand .thumb .title div.text a { text-decoration: none; }
+.thumb-on-demand .thumb .title .edit { position: absolute; bottom: -4px; right: 0; background: #fff; }
+.thumb-on-demand .thumb.disabled, .has-error .thumb-on-demand .thumb { opacity: 0.5; }
+.thumb-on-demand .thumb.disabled .img, .has-error .thumb-on-demand .thumb .img { display: none; }
+.thumb-on-demand .thumb.disabled .glyphicon, .has-error .thumb-on-demand .thumb .glyphicon { cursor: default; color: #ccc; }

@@ -20,6 +20,5 @@ class UploadImageAsset extends \yii\web\AssetBundle
 
     public $depends = [
         BootstrapAsset::class,
-        ThumbAsset::class,
     ];
 }

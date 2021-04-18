@@ -42,7 +42,7 @@ class UploadImageBehavior extends \yii\base\Behavior
         $this->owner->{$attr} = $file;
         $this->files[$attr] = $path;
 
-        $this->filePath2fileProps($path, true);
+        $this->filePath2fileProps($attr, $path, $path, true);
     }
 
     public function getThumbUrl($attr, $preset)
@@ -50,9 +50,9 @@ class UploadImageBehavior extends \yii\base\Behavior
         return Yii::$app->thumb->getThumbUrl($this->owner, $attr, $preset);
     }
 
-    public function beforeSave()
+    public function beforeSave(\yii\base\ModelEvent $event)
     {
-        $this->uploaded = [];
+        $this->uploaded = $this->toDelete = [];
 
         foreach ((array) $this->attr as $attr) {
             $old = $this->owner->getOldAttribute($attr);
@@ -60,7 +60,8 @@ class UploadImageBehavior extends \yii\base\Behavior
             $uploaded = UploadedFile::getInstance($this->owner, $attr);
 
             if ($uploaded && $uploaded->error) {
-                $this->owner->addError($attr, "Upload error - code {$uploaded->error}");
+                $error = Yii::t('yii', 'File upload failed.');
+                $this->owner->addError($attr, $error);
                 continue;
             }
 
@@ -75,10 +76,19 @@ class UploadImageBehavior extends \yii\base\Behavior
 
             $this->setFileProp($attr, $uploaded);
         }
+
+        if ($this->owner->hasErrors()) {
+            $event->isValid = false;
+        }
     }
 
     public function afterSave()
     {
+        foreach ($this->toDelete as $attr => $file) {
+            Yii::$app->thumb->deleteImage($this->owner, $attr, $file);
+        }
+        $this->toDelete = [];
+
         foreach ($this->uploaded as $attr => $uploaded) {
             Yii::$app->thumb->saveUploaded($this->owner, $attr, $uploaded);
         }
@@ -114,11 +124,19 @@ class UploadImageBehavior extends \yii\base\Behavior
 
         $this->uploaded[$attr] = $uploaded;
 
-        $this->filePath2fileProps($uploaded->tempName);
+        $this->filePath2fileProps($attr, $uploaded->tempName, $uploaded->name);
     }
 
-    protected function filePath2fileProps($path, $withAlt = false)
+    protected function filePath2fileProps($attr, $path, $name, $withAlt = false)
     {
+        $info = getimagesize($path);
+        if (false === $info) {
+            $error = Yii::t('yii', 'The file "{file}" is not an image.',
+                        ['file' => $name]);
+            $this->owner->addError($attr, $error);
+            return false;
+        }
+
         if ($this->filesizeAttr) {
             $ownerAttr = $this->filesizeAttr;
             $this->owner->{$ownerAttr} = filesize($path);
@@ -132,10 +150,9 @@ class UploadImageBehavior extends \yii\base\Behavior
         }
 
         if (!$this->widthAttr && !$this->heightAttr) {
-            return;
+            return true;
         }
 
-        $info = getimagesize($path);
         if ($this->widthAttr) {
             $ownerAttr = $this->widthAttr;
             $this->owner->{$ownerAttr} = $info[0];
@@ -145,13 +162,15 @@ class UploadImageBehavior extends \yii\base\Behavior
             $ownerAttr = $this->heightAttr;
             $this->owner->{$ownerAttr} = $info[1];
         }
+
+        return true;
     }
 
     protected function remove($attr, $file)
     {
-        $this->owner->{$attr} = null;
-        Yii::$app->thumb->deleteImage($this->owner, $attr, $file);
+        $this->toDelete[$attr] = $file;
 
+        $this->owner->{$attr} = null;
         foreach (['widthAttr', 'heightAttr', 'filesizeAttr'] as $tmpAttr) {
             if (!$this->{$tmpAttr}) {
                 continue;

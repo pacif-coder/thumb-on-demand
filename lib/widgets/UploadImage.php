@@ -1,6 +1,7 @@
 <?php
 namespace ThumbOnDemand\widgets;
 
+use Yii;
 use yii\bootstrap\Html;
 use yii\widgets\ActiveForm;
 
@@ -47,7 +48,8 @@ class UploadImage extends \yii\bootstrap\InputWidget
         $hidden = Html::hiddenInput($name, '', $attrs);
         $file = Html::fileInput($name, null, ['id' => $id]);
 
-        $select = Html::tag('span', 'Выберите файл', ['class' => 'select-image']);
+        $label = Yii::t('yii', 'Please upload a file.');
+        $select = Html::tag('span', $label, ['class' => 'select-image']);
         $label = Html::tag('label', $select . $hidden . $file, ['for' => $this->getId()]);
 
         $attrs = ['class' => 'select-panel-content'];
@@ -63,7 +65,7 @@ class UploadImage extends \yii\bootstrap\InputWidget
 
         $attrs = [
             'data-role' => 'thumb-on-demand-upload-image',
-            'class' => 'thumb-on-demand-upload-image clearfix',
+            'class' => 'thumb-on-demand thumb-on-demand-upload-image clearfix',
         ];
 
         if ($this->altAttr) {

@@ -13,6 +13,8 @@ use yii\imagine\Image;
 
 use Imagine\Image\ManipulatorInterface;
 
+use stdClass;
+
 /**
  * <file> - mast be last
  * check strpos pos
@@ -39,7 +41,17 @@ class Thumb extends BaseObject
 
     public $id2DirLen = 2;
 
+    public $forceCreatePresets;
+
     public $webroot = '@webroot';
+
+    public $directoryMode = 0777;
+
+    public $fileMode = 0777;
+
+    public $host = '';
+
+    public $modelClass;
 
     public function init()
     {
@@ -52,31 +64,42 @@ class Thumb extends BaseObject
 
     public function getThumbUrl($object, $attr, $preset)
     {
+        if (is_array($object)) {
+            $object = (object) $object;
+        }
+
         if (!$object->{$attr}) {
             return;
         }
 
-        return $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset);
+        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset);
+        return "{$this->host}{$url}";
     }
 
-    public function _getThumbUrl($object, $attr, $image, $preset)
+    public function getThumbPath($object, $attr, $preset)
+    {
+        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset);
+        return $this->_addWebRoot($url);
+    }
+
+    protected function _getThumbUrl($object, $attr, $image, $preset)
     {
         $path = $this->_createPath($object, $attr, $image, 'thumb');
         return "/{$this->thumbFolder}/{$preset}/{$path}";
     }
 
-    public function getThumbPath($object, $attr, $preset)
-    {
-        return $this->_addWebRoot($this->getThumbUrl($object, $attr, $preset));
-    }
-
     public function getOriginUrl($object, $attr)
     {
+        if (is_array($object)) {
+            $object = (object) $object;
+        }
+
         if (!$object->{$attr}) {
             return;
         }
 
-        return $this->_getOriginUrl($object, $attr, $object->{$attr});
+        $url = $this->_getOriginUrl($object, $attr, $object->{$attr});
+        return "{$this->host}{$url}";
     }
 
     public function getOriginPath($object, $attr)
@@ -99,7 +122,6 @@ class Thumb extends BaseObject
         foreach (array_keys($this->presets) as $preset) {
             $url = $this->_getThumbUrl($object, $attr, $image, $preset);
             $path = $this->_addWebRoot($url);
-
             $this->_unlink($path, $this->thumbFolder);
         }
     }
@@ -136,7 +158,7 @@ class Thumb extends BaseObject
     protected function _forceCreateThumb($object, $attr, $path)
     {
         foreach ($this->presets as $preset => $desc) {
-            if (!$this->_isForceCreate($object, $desc)) {
+            if (!$this->_isForceCreate($object, $preset, $desc)) {
                 continue;
             }
 
@@ -147,7 +169,7 @@ class Thumb extends BaseObject
 
     protected function _saveUploaded(UploadedFile $uploadedFile, $path)
     {
-        FileHelper::createDirectory(dirname($path));
+        $this->_createDirectory(dirname($path));
 
         if (!$this->originExt) {
             return $uploadedFile->saveAs($path);
@@ -166,7 +188,7 @@ class Thumb extends BaseObject
         $url = $this->_getOriginUrl($object, $attr, $path);
         $destPath = $this->_addWebRoot($url);
 
-        FileHelper::createDirectory(dirname($destPath));
+        $this->_createDirectory(dirname($destPath));
         $this->_saveFile($path, $destPath);
 
         $this->_forceCreateThumb($object, $attr, $path);
@@ -182,12 +204,21 @@ class Thumb extends BaseObject
         }
 
         $imagine->open($source)->save($dest, $originOptions);
+
+        if (null !== $this->fileMode) {
+            chmod($dest, $this->fileMode);
+        }
     }
 
     protected function object2params($object, $needAttrs = [])
     {
         $params = [];
-        $class = get_class($object);
+        if (is_object($object) && !is_a($object, stdClass::class)) {
+            $class = get_class($object);
+        } else {
+            // XXX add check
+            $class = $this->modelClass;
+        }
 
         if ($class) {
             $classParts = explode('\\', $class);
@@ -198,8 +229,8 @@ class Thumb extends BaseObject
             }
         }
 
-        if (is_a($object, ActiveRecord::class)) {
-            $keys = $object::primaryKey();
+        if (is_a($object, ActiveRecord::class) || is_a($class, ActiveRecord::class, true)) {
+            $keys = $class::primaryKey();
 
             if (count($keys) > 1) {
                 throw new InvalidConfigException("Preset with name '{$name}' not found");
@@ -288,10 +319,14 @@ class Thumb extends BaseObject
             throw new NotFoundHttpException("Not find origin image '{$originPath}'");
         }
 
-        FileHelper::createDirectory(dirname($thumbPath));
+        $this->_createDirectory(dirname($thumbPath));
 
         $thumbnail = Image::resize($originPath, $desc['width'], $desc['height'], ManipulatorInterface::THUMBNAIL_OUTBOUND);
         $thumbnail->save($thumbPath, $thumbOptions);
+
+        if (null !== $this->fileMode) {
+            chmod($thumbPath, $this->fileMode);
+        }
     }
 
     protected function _unlink($path, $topDir)
@@ -315,8 +350,12 @@ class Thumb extends BaseObject
         }
     }
 
-    protected function _isForceCreate($object, $desc)
+    protected function _isForceCreate($object, $preset, $desc)
     {
+        if ($this->forceCreatePresets && in_array($preset, (array) $this->forceCreatePresets)) {
+            return true;
+        }
+
         if (!isset($desc['forceCreate']) || !$desc['forceCreate']) {
             return false;
         }
@@ -332,6 +371,12 @@ class Thumb extends BaseObject
         }
 
         return $desc['forceCreate'] ? true : false;
+    }
+
+    protected function _createDirectory($dirpath)
+    {
+        $mode = $this->directoryMode? $this->directoryMode : 0775;
+        FileHelper::createDirectory($dirpath, $mode);
     }
 
     protected function _createPath($object, $attr, $file, $extFrom)
