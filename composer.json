@@ -9,16 +9,16 @@
             "email": "pacif.coder@gmail.com"
         }
     ],
-    "minimum-stability": "alpha",
+    "minimum-stability": "stable",
     "require": {
         "yiisoft/yii2-imagine": "^2.2"
     },
-    
+
     "autoload": {
         "psr-4": {
             "ThumbOnDemand\\": "lib"
         }
-    }    
+    }
 }
 
 
