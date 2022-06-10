@@ -9,14 +9,14 @@ use yii\jui\JuiAsset;
  */
 class MatrixGridAsset extends \yii\web\AssetBundle
 {
-    public $sourcePath = __DIR__ . '/matrix-grid';
+    public $sourcePath = __DIR__ . '/asset';
 
     public $js = [
-        'matrix-grid.js',
+        'js/matrix-grid.js',
     ];
 
     public $css = [
-        'matrix-grid.css',
+        'css/matrix-grid.css',
     ];
 
     public $depends = [

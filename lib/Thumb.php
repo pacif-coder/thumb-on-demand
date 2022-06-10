@@ -19,47 +19,29 @@ use stdClass;
  * <file> - mast be last
  * check strpos pos
  */
-class Thumb extends BaseObject
+class Thumb extends File
 {
-    public $presets = [];
-
-    public $originFolder = 'images/origin';
-
-    public $originPath = '<class>/<id2dirs>/<id>-<file>';
+    public $webDir = 'media/images';
 
     public $originExt;
 
     public $originQuality = 70;
 
-    public $thumbFolder = 'images/thumb';
+    public $presets = [];
+
+    public $thumbWebDir = 'media/thumbs';
 
     public $thumbExt;
 
     public $thumbQuality = 70;
 
-    public $id2DirsLen = 8;
-
-    public $id2DirLen = 2;
-
     public $forceCreatePresets;
-
-    public $webroot = '@webroot';
-
-    public $directoryMode = 0777;
-
-    public $fileMode = 0777;
-
-    public $host = '';
-
-    public $modelClass;
 
     public function init()
     {
         parent::init();
 
-        $this->thumbFolder = trim($this->thumbFolder, '/');
-
-        $this->originFolder = trim($this->originFolder, '/');
+        $this->thumbWebDir = trim($this->thumbWebDir, '/');
     }
 
     public function getThumbUrl($object, $attr, $preset)
@@ -85,44 +67,17 @@ class Thumb extends BaseObject
     protected function _getThumbUrl($object, $attr, $image, $preset)
     {
         $path = $this->_createPath($object, $attr, $image, 'thumb');
-        return "/{$this->thumbFolder}/{$preset}/{$path}";
+        return "/{$this->thumbWebDir}/{$preset}/{$path}";
     }
 
-    public function getOriginUrl($object, $attr)
+    public function delete($object, $attr, $image)
     {
-        if (is_array($object)) {
-            $object = (object) $object;
-        }
-
-        if (!$object->{$attr}) {
-            return;
-        }
-
-        $url = $this->_getOriginUrl($object, $attr, $object->{$attr});
-        return "{$this->host}{$url}";
-    }
-
-    public function getOriginPath($object, $attr)
-    {
-        return $this->_addWebRoot($this->_getOriginUrl($object, $attr, $object->{$attr}));
-    }
-
-    protected function _getOriginUrl($object, $attr, $image)
-    {
-        $path = $this->_createPath($object, $attr, $image, 'origin');
-        return "/{$this->originFolder}/{$path}";
-    }
-
-    public function deleteImage($object, $attr, $image)
-    {
-        $url = $this->_getOriginUrl($object, $attr, $image);
-        $path = $this->_addWebRoot($url);
-        $this->_unlink($path, $this->originFolder);
+        parent::delete($object, $attr, $image);
 
         foreach (array_keys($this->presets) as $preset) {
             $url = $this->_getThumbUrl($object, $attr, $image, $preset);
             $path = $this->_addWebRoot($url);
-            $this->_unlink($path, $this->thumbFolder);
+            $this->_unlink($path, $this->thumbWebDir);
         }
     }
 
@@ -148,7 +103,7 @@ class Thumb extends BaseObject
 
     public function saveUploaded($object, $attr, UploadedFile $uploadedFile)
     {
-        $url = $this->_getOriginUrl($object, $attr, $uploadedFile->name);
+        $url = $this->_getUrl($object, $attr, $uploadedFile->name);
         $path = $this->_addWebRoot($url);
 
         $this->_saveUploaded($uploadedFile, $path);
@@ -180,21 +135,21 @@ class Thumb extends BaseObject
             return $uploadedFile->saveAs($path);
         }
 
-        $this->_saveFile($uploadedFile->tempName, $path);
+        $this->_saveOriginImage($uploadedFile->tempName, $path);
     }
 
     public function saveOriginFile($object, $attr, $path)
     {
-        $url = $this->_getOriginUrl($object, $attr, $path);
+        $url = $this->_getUrl($object, $attr, $path);
         $destPath = $this->_addWebRoot($url);
 
         $this->_createDirectory(dirname($destPath));
-        $this->_saveFile($path, $destPath);
+        $this->_saveOriginImage($path, $destPath);
 
         $this->_forceCreateThumb($object, $attr, $path);
     }
 
-    protected function _saveFile($source, $dest)
+    protected function _saveOriginImage($source, $dest)
     {
         $imagine = Image::getImagine();
 
@@ -210,54 +165,6 @@ class Thumb extends BaseObject
         }
     }
 
-    protected function object2params($object, $needAttrs = [])
-    {
-        $params = [];
-        if (is_object($object) && !is_a($object, stdClass::class)) {
-            $class = get_class($object);
-        } else {
-            // XXX add check
-            $class = $this->modelClass;
-        }
-
-        if ($class) {
-            $classParts = explode('\\', $class);
-            $params['class'] = lcfirst(end($classParts));
-            $index = array_search('models', $classParts);
-            if ($index > 0) {
-                $params['module'] = $classParts[$index - 1];
-            }
-        }
-
-        if (is_a($object, ActiveRecord::class) || is_a($class, ActiveRecord::class, true)) {
-            $keys = $class::primaryKey();
-
-            if (count($keys) > 1) {
-                throw new InvalidConfigException("Preset with name '{$name}' not found");
-            } elseif ($keys) {
-                $idKey = current($keys);
-                $id = $object->{$idKey};
-                $params['id'] = $id;
-
-                $count2dir = 10 ** $this->id2DirLen;
-                $num = intdiv($id, $count2dir);
-                $id2dirs = sprintf("%0{$this->id2DirsLen}d", $num);
-
-                $reg = '/\d{' . $this->id2DirLen . '}/';
-                $id2dirs = trim(preg_replace($reg, '$0/', $id2dirs), '/');
-                $params['id2dirs'] = $id2dirs;
-            }
-        }
-
-        if ($needAttrs && is_a($object, BaseObject::class)) {
-            foreach ($needAttrs as $attr) {
-                $params["attributes:{$attr}"] = $object->{$attr};
-            }
-        }
-
-        return $params;
-    }
-
     public function createThumbByUrl($url = null)
     {
         if (null === $url) {
@@ -268,7 +175,7 @@ class Thumb extends BaseObject
         $backupUrl = $url;
 
         // cut thumb folder
-        $url = substr($url, strlen($this->thumbFolder));
+        $url = substr($url, strlen($this->thumbWebDir));
         $url = ltrim($url, '/');
 
         // find preset
@@ -290,7 +197,7 @@ class Thumb extends BaseObject
             }
         }
 
-        $originPath = $this->_addWebRoot("/{$this->originFolder}/{$origin}");
+        $originPath = $this->_addWebRoot("/{$this->webDir}/{$origin}");
         if (!file_exists($originPath)) {
             throw new NotFoundHttpException("Not find origin image for url '{$backupUrl}'");
         }
@@ -329,27 +236,6 @@ class Thumb extends BaseObject
         }
     }
 
-    protected function _unlink($path, $topDir)
-    {
-        if (!file_exists($path)) {
-            return;
-        }
-
-        FileHelper::unlink($path);
-
-        $topDirLen = strlen($this->_addWebRoot('/' . $topDir));
-        $dir = dirname($path);
-        while (strlen($dir) > $topDirLen) {
-            $count = count(scandir($dir)) - 2;
-            if ($count > 0) {
-                break;
-            }
-
-            FileHelper::removeDirectory($dir);
-            $dir = dirname($dir);
-        }
-    }
-
     protected function _isForceCreate($object, $preset, $desc)
     {
         if ($this->forceCreatePresets && in_array($preset, (array) $this->forceCreatePresets)) {
@@ -373,101 +259,23 @@ class Thumb extends BaseObject
         return $desc['forceCreate'] ? true : false;
     }
 
-    protected function _createDirectory($dirpath)
+    protected function _createPath($object, $attr, $file, $extConvert = null)
     {
-        $mode = $this->directoryMode? $this->directoryMode : 0775;
-        FileHelper::createDirectory($dirpath, $mode);
-    }
+        $path = parent::_createPath($object, $attr, $file, $extConvert);
 
-    protected function _createPath($object, $attr, $file, $extFrom)
-    {
-        $path = $this->originPath;
-
-        $matchs = [];
-        preg_match_all('/<([^>]+)>/', $path, $matchs,
-                PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE);
-
-        $needAttrs = $params = $datas = [];
-        foreach ($matchs[1] as $i => $match) {
-            $param = $match[0];
-
-            $pos = strpos($param, ':');
-            if (false === $pos) {
-                $params[$i] = $param;
-                continue;
-            }
-
-            $data = substr($param, $pos + 1);
-            $param = substr($param, 0, $pos);
-
-            $params[$i] = $param;
-            $datas[$i] = $data;
-
-            if ('attributes' == $param) {
-                $needAttrs[] = $data;
-            }
-        }
-
-        $paramValues = $this->object2params($object, $needAttrs);
-
-        $ext = null;
-        if ('origin' == $extFrom && $this->originExt) {
-            $ext = $this->originExt;
-        } elseif ('thumb' == $extFrom && $this->thumbExt) {
-            $ext = $this->thumbExt;
-        }
-
-        $diff = 0;
-        foreach ($matchs[0] as $i => $match) {
-            $tag = $match[0];
-            $begin = $match[1];
-            $len = strlen($tag);
-
-            $param = $params[$i];
-            switch ($param) {
-                case 'attr':
-                    $value = $attr;
-                    break;
-
-                case 'attributes':
-                    $value = $paramValues[$param . ':' . $datas[$i]];
-                    break;
-
-                case 'file':
-                    $value = $ext ?
-                        pathinfo($file, PATHINFO_FILENAME) . '.' . $ext
-                        :
-                        basename($file);
-                    break;
-
-                case 'filename':
-                    $value = pathinfo($file, PATHINFO_FILENAME);
-                    break;
-
-                case 'extension':
-                    $value = $ext ? $ext : pathinfo($file, PATHINFO_EXTENSION);
-                    break;
-
-                default:
-                    $value = $paramValues[$param];
-            }
-
-            $path = substr($path, 0, $begin + $diff)
-                    . (string) $value
-                    . substr($path, $begin + $len + $diff);
-
-            $diff += (strlen($value) - $len);
-        }
-
-        if ('thumb' == $extFrom && $this->thumbExt && !$this->originExt) {
+        if ('thumb' == $extConvert && $this->thumbExt && !$this->originExt) {
             $path = pathinfo($file, PATHINFO_EXTENSION) . '/' . $path;
         }
 
         return $path;
     }
 
-    protected function _addWebRoot($path)
+    protected function _extConvert($extConvert)
     {
-        return Yii::getAlias("{$this->webroot}{$path}");
+        if ('origin' == $extConvert && $this->originExt) {
+            return $this->originExt;
+        } elseif ('thumb' == $extConvert && $this->thumbExt) {
+            return $this->thumbExt;
+        }
     }
 }

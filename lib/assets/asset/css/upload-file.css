@@ -1,0 +1,3 @@
+.widget-file-input { padding-top: 5px; }
+.widget-file-input a, .widget-file-input a:visited, .widget-file-input a:active { text-decoration: none; }
+.widget-file-input.delete a, .widget-file-input.delete a:visited, .widget-file-input.delete a:active { text-decoration: line-through; }

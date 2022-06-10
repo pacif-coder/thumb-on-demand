@@ -31,6 +31,9 @@ class MatrixGridView extends \yii\widgets\BaseListView
         $keys = $this->dataProvider->getKeys();
 
         /*@var $cell Cell */
+        if (is_array($this->cell) && !isset($this->cell['class'])) {
+            $this->cell['class'] = Simple::class;
+        }
         $this->cell = Yii::createObject($this->cell);
 
         $this->cell->matrixGrid = $this;

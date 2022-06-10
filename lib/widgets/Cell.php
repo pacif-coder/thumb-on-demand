@@ -208,7 +208,7 @@ abstract class Cell extends \yii\base\BaseObject
 
     protected function renderName($model, $key, $index)
     {
-        $name = $this->getName($model);
+        $name = $this->getName($model, $key, $index);
 
         $text = Html::tag('div', $name, ['class' => 'text']);
         return Html::tag('div', $text, ['class' => 'title']);

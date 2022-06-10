@@ -11,7 +11,7 @@ use ThumbOnDemand\assets\UploadImageAsset;
  *
  *
  */
-class UploadImage extends \yii\bootstrap\InputWidget
+class UploadImage extends \yii\widgets\InputWidget
 {
     public $multiple = false;
 

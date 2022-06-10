@@ -8,10 +8,10 @@ use yii\bootstrap\BootstrapAsset;
  */
 class ThumbAsset extends \yii\web\AssetBundle
 {
-    public $sourcePath = __DIR__ . '/thumb';
+    public $sourcePath = __DIR__ . '/asset';
 
     public $css = [
-        'thumb.css',
+        'css/thumb.css',
     ];
 
     public $depends = [
