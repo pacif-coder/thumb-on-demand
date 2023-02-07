@@ -10,7 +10,7 @@ use yii\base\InvalidConfigException;
  */
 abstract class Cell extends \yii\base\BaseObject
 {
-    public $matrixGrid;
+    public $grid;
 
     public $layout = "{tools}\n{image}\n{name}";
 
@@ -33,7 +33,7 @@ abstract class Cell extends \yii\base\BaseObject
      * - `$model`: the current data model being rendered
      * - `$key`: the key value associated with the current data model
      * - `$index`: the zero-based index of the data model in the model array returned by [[dataProvider]]
-     * - `$matrixGrid`: the MatrixGridView object
+     * - `$grid`: the MatrixGridView object
      *
      * @see \yii\helpers\Html::renderTagAttributes() for details on how attributes are being rendered.
      */
@@ -111,7 +111,7 @@ abstract class Cell extends \yii\base\BaseObject
         }
 
         if ($this->thumbOptions instanceof \Closure) {
-            $options = call_user_func($this->thumbOptions, $model, $key, $index, $this->matrixGrid);
+            $options = call_user_func($this->thumbOptions, $model, $key, $index, $this->grid);
         } else {
             $options = $this->thumbOptions;
         }
