@@ -1,7 +1,7 @@
 <?php
 namespace ThumbOnDemand\widgets;
 
-use yii\bootstrap\Html;
+use yii\helpers\Html;
 
 use Yii;
 use yii\db\ActiveQueryInterface;
@@ -19,6 +19,12 @@ class MatrixGridView extends \yii\widgets\BaseListView
     public $options = [
         'class' => 'matrix-grid-view',
         'data-role' => 'matrix-grid-view',
+        'data-is-grid' => 1,
+    ];
+
+    public $bodyAttrs = [
+        'class' => 'thumb-on-demand thumb-on-demand-images-grid clearfix',
+        'data-role' => 'matrix-grid-view-body',
     ];
 
     protected static $noJsOptions = [
@@ -30,27 +36,13 @@ class MatrixGridView extends \yii\widgets\BaseListView
         $models = array_values($this->dataProvider->getModels());
         $keys = $this->dataProvider->getKeys();
 
-        /*@var $cell Cell */
-        if (is_array($this->cell) && !isset($this->cell['class'])) {
-            $this->cell['class'] = Simple::class;
-        }
-        $this->cell = Yii::createObject($this->cell);
-
-        $this->cell->grid = $this;
-
-        $this->cell->modelClass = null;
-        if ($this->dataProvider->query instanceof ActiveQueryInterface) {
-            $this->cell->modelClass = $this->dataProvider->query->modelClass;
-        }
-
         $items = '';
         foreach ($models as $index => $model) {
             $key = $keys[$index];
             $items .= $this->cell->render($model, $key, $index) . "\n";
         }
 
-        return Html::tag('div', $items,
-                ['class' => 'thumb-on-demand thumb-on-demand-images-grid']);
+        return Html::tag('div', $items, $this->bodyAttrs);
     }
 
     public function run()
@@ -59,7 +51,20 @@ class MatrixGridView extends \yii\widgets\BaseListView
         MatrixGridAsset::register($view);
 
         $this->registerJs();
+        $this->initCell();
+
         parent::run();
+    }
+
+    protected function initCell()
+    {
+        /* @var $cell Cell */
+        $this->cell = Yii::createObject($this->cell);
+        $this->cell->grid = $this;
+
+        if (!$this->cell->modelClass && $this->dataProvider->query instanceof ActiveQueryInterface) {
+            $this->cell->modelClass = $this->dataProvider->query->modelClass;
+        }
     }
 
     protected function registerJs()
