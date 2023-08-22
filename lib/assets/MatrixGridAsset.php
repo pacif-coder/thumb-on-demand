@@ -1,16 +1,13 @@
 <?php
 namespace ThumbOnDemand\assets;
 
-use yii\bootstrap\BootstrapAsset;
 use yii\jui\JuiAsset;
 
 /**
  *
  */
-class MatrixGridAsset extends \yii\web\AssetBundle
+class MatrixGridAsset extends BaseAsset
 {
-    public $sourcePath = __DIR__ . '/asset';
-
     public $js = [
         'js/matrix-grid.js',
     ];
@@ -20,7 +17,6 @@ class MatrixGridAsset extends \yii\web\AssetBundle
     ];
 
     public $depends = [
-        BootstrapAsset::class,
         JuiAsset::class,
         ThumbAsset::class,
     ];

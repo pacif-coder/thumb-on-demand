@@ -1,26 +1,71 @@
 .thumb-on-demand {
-    .thumb {
-        display: inline-block;
+    .thumb, .card {
+        width: 150px;
+        height: 230px;
         box-sizing: border-box;
+        margin: 0 calc(var(--bs-card-spacer-x)/2) calc(var(--bs-card-spacer-x)/2) 0;
+
+        .img {
+            display: table;
+            width: 100%;
+
+            a {
+                display: table-cell;
+                vertical-align: middle;
+                text-align: center;
+                width: 100%;
+                height: 140px;
+            }
+        }
+
+        .title {
+            div.text {
+                text-align: center;
+
+                width: 100%;
+                display: block;
+
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+
+                a {
+                    text-decoration: none;
+                }
+            }
+        }
+
+        .glyphicon, .bi {
+            cursor: pointer;
+
+            &.ui-sortable-handle {
+                cursor: move;
+            }
+        }
+    }
+
+    .card {
+        display: block;
+        float: left;
+
+        .tools {
+            padding: calc(var(--bs-card-spacer-y)/4) calc(var(--bs-card-spacer-x)/2);
+        }
+
+        .title {
+            padding-left: calc(var(--bs-card-spacer-x)/2);
+            padding-right: calc(var(--bs-card-spacer-x)/2);
+        }
+    }
+
+    .thumb {
         padding: 6px;
-        margin: 0 2px 2px 0;
+        display: inline-block;
         text-align: center;
         border: 1px solid #f0f0f0;
         border-radius: 4px;
-        width: 143px;
-        height: 195px;
-    }
-
-    .thumb .glyphicon {
-        cursor: pointer;
-    }
-
-    .thumb .img {
-        display: table-cell;
-        vertical-align: middle;
-        text-align: center;
-        width: 130px;
-        height: 130px;
     }
 
     .thumb .img img {
@@ -44,30 +89,6 @@
 
     .thumb .title {
         height: 2.2em;
-        width: 124px;
-        position: relative;
-    }
-
-    .thumb .title div.text {
-        top: 0;
-        left: 0;
-        position: absolute;
-        text-align: center;
-        height: 2.2em;
-        line-height: 120%;
-
-        width: 100%;
-
-        display: block;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .thumb .title div.text a {
-        text-decoration: none;
     }
 
     .thumb .title .edit {

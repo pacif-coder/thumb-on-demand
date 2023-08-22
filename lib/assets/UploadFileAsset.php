@@ -1,24 +1,16 @@
 <?php
 namespace ThumbOnDemand\assets;
 
-use yii\bootstrap\BootstrapAsset;
-
 /**
  *
  */
-class UploadFileAsset extends \yii\web\AssetBundle
+class UploadFileAsset extends BaseAsset
 {
-    public $sourcePath = __DIR__ . '/asset';
-
     public $css = [
         'css/upload-file.css',
     ];
 
     public $js = [
         'js/upload-file.js',
-    ];
-
-    public $depends = [
-        BootstrapAsset::class,
     ];
 }
