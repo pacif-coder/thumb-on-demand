@@ -44,7 +44,7 @@ class Thumb extends File
         $this->thumbWebDir = trim($this->thumbWebDir, '/');
     }
 
-    public function getThumbUrl($object, $attr, $preset)
+    public function getThumbUrl($object, $attr, $preset, $forceModelClass = false)
     {
         if (is_array($object)) {
             $object = (object) $object;
@@ -54,28 +54,28 @@ class Thumb extends File
             return;
         }
 
-        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset);
+        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset, $forceModelClass);
         return "{$this->host}{$url}";
     }
 
-    public function getThumbPath($object, $attr, $preset)
+    public function getThumbPath($object, $attr, $preset, $forceModelClass = false)
     {
-        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset);
+        $url = $this->_getThumbUrl($object, $attr, $object->{$attr}, $preset, $forceModelClass);
         return $this->_addWebRoot($url);
     }
 
-    protected function _getThumbUrl($object, $attr, $image, $preset)
+    protected function _getThumbUrl($object, $attr, $image, $preset, $forceModelClass = false)
     {
-        $path = $this->_createPath($object, $attr, $image, 'thumb');
+        $path = $this->_createPath($object, $attr, $image, 'thumb', $forceModelClass);
         return "/{$this->thumbWebDir}/{$preset}/{$path}";
     }
 
-    public function delete($object, $attr, $image)
+    public function delete($object, $attr, $image, $forceModelClass = false)
     {
-        parent::delete($object, $attr, $image);
+        parent::delete($object, $attr, $image, $forceModelClass);
 
         foreach (array_keys($this->presets) as $preset) {
-            $url = $this->_getThumbUrl($object, $attr, $image, $preset);
+            $url = $this->_getThumbUrl($object, $attr, $image, $preset, $forceModelClass);
             $path = $this->_addWebRoot($url);
             $this->_unlink($path, $this->thumbWebDir);
         }
@@ -101,9 +101,9 @@ class Thumb extends File
         return $info['basename'];
     }
 
-    public function saveUploaded($object, $attr, UploadedFile $uploadedFile)
+    public function saveUploaded($object, $attr, UploadedFile $uploadedFile, $forceModelClass = false)
     {
-        $url = $this->_getUrl($object, $attr, $uploadedFile->name);
+        $url = $this->_getUrl($object, $attr, $uploadedFile->name, $forceModelClass);
         $path = $this->_addWebRoot($url);
 
         $this->_saveUploaded($uploadedFile, $path);
@@ -138,9 +138,9 @@ class Thumb extends File
         $this->_saveOriginImage($uploadedFile->tempName, $path);
     }
 
-    public function saveOriginFile($object, $attr, $path)
+    public function saveOriginFile($object, $attr, $path, $forceModelClass = false)
     {
-        $url = $this->_getUrl($object, $attr, $path);
+        $url = $this->_getUrl($object, $attr, $path, $forceModelClass);
         $destPath = $this->_addWebRoot($url);
 
         $this->_createDirectory(dirname($destPath));
@@ -259,9 +259,9 @@ class Thumb extends File
         return $desc['forceCreate'] ? true : false;
     }
 
-    protected function _createPath($object, $attr, $file, $extConvert = null)
+    protected function _createPath($object, $attr, $file, $extConvert, $forceModelClass = false)
     {
-        $path = parent::_createPath($object, $attr, $file, $extConvert);
+        $path = parent::_createPath($object, $attr, $file, $extConvert, $forceModelClass);
 
         if ('thumb' == $extConvert && $this->thumbExt && !$this->originExt) {
             $path = pathinfo($file, PATHINFO_EXTENSION) . '/' . $path;
