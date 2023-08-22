@@ -2,7 +2,7 @@
 namespace ThumbOnDemand\widgets;
 
 use Yii;
-use yii\bootstrap\Html;
+use ThumbOnDemand\helpers\Html;
 use yii\widgets\ActiveForm;
 
 use ThumbOnDemand\assets\UploadFileAsset;
@@ -38,13 +38,20 @@ class UploadFile extends \yii\widgets\InputWidget
             $this->field->form->options['enctype'] = 'multipart/form-data';
         }
 
-        if ($this->field->form->validationStateOn === ActiveForm::VALIDATION_STATE_ON_INPUT) {
+        $isBs3 = 3 == Html::getBootstrapVersion();
+        $validationInput = $this->field->form->validationStateOn === ActiveForm::VALIDATION_STATE_ON_INPUT;
+        if ($isBs3 && $validationInput) {
             $this->field->addErrorClassIfNeeded($this->options);
         }
 
         $link = $fileUpload = '';
         $dropInputAttrs = ['data-role' => 'drop', 'disabled' => 'disabled', 'id' => null, 'value' => ''];
         $fileInputAttrs = ['data-role' => 'file'];
+
+        if (isset($this->options['class'])) {
+            Html::addCssClass($fileInputAttrs, $this->options['class']);
+        }
+
         if ($this->hasModel()) {
             $dropInput = Html::activeInput('hidden', $this->model, $this->attribute, $dropInputAttrs);
             $fileInput = Html::activeInput('file', $this->model, $this->attribute, $fileInputAttrs);
@@ -65,8 +72,8 @@ class UploadFile extends \yii\widgets\InputWidget
                 $trash = Html::tag('span', Html::icon('trash'), $trashButtonAttrs);
             }
 
-            $str .= Html::tag('div', $link . $trash);
-            $str .= $fileInput;
+            // $str .= Html::tag('div', $link . $trash);
+            $str .= $fileInput  . $link . $trash;
         } else {
             $trashButtonAttrs['class'] = 'hidden';
             $trash = Html::tag('span', Html::icon('trash'), $trashButtonAttrs);
