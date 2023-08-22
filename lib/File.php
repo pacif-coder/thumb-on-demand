@@ -33,8 +33,6 @@ class File extends \yii\base\BaseObject
 
     public $host = '';
 
-    public $modelClass;
-
     public $webRoot = '@webroot';
 
     public function init()
@@ -44,7 +42,7 @@ class File extends \yii\base\BaseObject
         $this->webDir = trim($this->webDir, '/');
     }
 
-    public function getUrl($object, $attr)
+    public function getUrl($object, $attr, $forceModelClass = false)
     {
         if (is_array($object)) {
             $object = (object) $object;
@@ -54,18 +52,19 @@ class File extends \yii\base\BaseObject
             return;
         }
 
-        $url = $this->_getUrl($object, $attr, $object->{$attr});
+        $url = $this->_getUrl($object, $attr, $object->{$attr}, $forceModelClass);
         return "{$this->host}{$url}";
     }
 
-    public function getPath($object, $attr)
+    public function getPath($object, $attr, $forceModelClass = false)
     {
-        return $this->_addWebRoot($this->_getUrl($object, $attr, $object->{$attr}));
+        $url = $this->_getUrl($object, $attr, $object->{$attr}, $forceModelClass);
+        return $this->_addWebRoot($url);
     }
 
-    public function delete($object, $attr, $file)
+    public function delete($object, $attr, $file, $forceModelClass = false)
     {
-        $url = $this->_getUrl($object, $attr, $file);
+        $url = $this->_getUrl($object, $attr, $file, $forceModelClass);
         $path = $this->_addWebRoot($url);
         $this->_unlink($path, $this->webDir);
     }
@@ -83,9 +82,9 @@ class File extends \yii\base\BaseObject
         return $info['basename'];
     }
 
-    public function saveUploaded($object, $attr, UploadedFile $uploadedFile)
+    public function saveUploaded($object, $attr, UploadedFile $uploadedFile, $forceModelClass = false)
     {
-        $url = $this->_getUrl($object, $attr, $uploadedFile->name);
+        $url = $this->_getUrl($object, $attr, $uploadedFile->name, $forceModelClass);
         $path = $this->_addWebRoot($url);
 
         $this->_saveUploaded($uploadedFile, $path);
@@ -97,24 +96,23 @@ class File extends \yii\base\BaseObject
         return $uploadedFile->saveAs($path);
     }
 
-    public function saveOriginFile($object, $attr, $path)
+    public function saveOriginFile($object, $attr, $path, $forceModelClass = false)
     {
-        $url = $this->_getUrl($object, $attr, $path);
+        $url = $this->_getUrl($object, $attr, $path, $forceModelClass);
         $destPath = $this->_addWebRoot($url);
 
         $this->_createDirectory(dirname($destPath));
         $this->_saveFile($path, $destPath);
-
     }
 
-    protected function object2params($object, $needAttrs = [])
+    protected function object2params($object, $needAttrs, $forceModelClass = false)
     {
         $params = [];
-        if (is_object($object) && !is_a($object, stdClass::class)) {
+        $class = null;
+        if (false !== $forceModelClass) {
+            $class = $forceModelClass;
+        } elseif (is_object($object) && !is_a($object, stdClass::class)) {
             $class = get_class($object);
-        } else {
-            // XXX add check
-            $class = $this->modelClass;
         }
 
         if ($class) {
@@ -155,13 +153,13 @@ class File extends \yii\base\BaseObject
         return $params;
     }
 
-    protected function _getUrl($object, $attr, $file)
+    protected function _getUrl($object, $attr, $file, $forceModelClass = false)
     {
-        $path = $this->_createPath($object, $attr, $file, 'origin');
+        $path = $this->_createPath($object, $attr, $file, 'origin', $forceModelClass);
         return "/{$this->webDir}/{$path}";
     }
 
-    protected function _createPath($object, $attr, $file, $extConvert = null)
+    protected function _createPath($object, $attr, $file, $extConvert, $forceModelClass = false)
     {
         $path = $this->path;
 
@@ -191,7 +189,7 @@ class File extends \yii\base\BaseObject
         }
 
         $diff = 0;
-        $paramValues = $this->object2params($object, $needAttrs);
+        $paramValues = $this->object2params($object, $needAttrs, $forceModelClass);
         $ext = $this->_extConvert($extConvert);
 
         foreach ($matchs[0] as $i => $match) {
