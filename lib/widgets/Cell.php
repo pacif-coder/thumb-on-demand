@@ -2,7 +2,7 @@
 namespace ThumbOnDemand\widgets;
 
 use Yii;
-use yii\bootstrap\Html;
+use ThumbOnDemand\helpers\Html;
 use yii\base\InvalidConfigException;
 
 /**
@@ -14,7 +14,7 @@ abstract class Cell extends \yii\base\BaseObject
 
     public $layout = "{tools}\n{image}\n{name}";
 
-    public $tools = '{remove}';
+    public $tools = ['remove'];
 
     public $toolIconAlign = [
         'remove' => 'right',
@@ -95,6 +95,11 @@ abstract class Cell extends \yii\base\BaseObject
         if (substr_compare($this->name, '[]', -2, 2)) {
             $this->name .= '[]';
         }
+
+        if (5 == Html::getBootstrapVersion() && is_array($this->thumbOptions)) {
+            Html::addCssClass($this->thumbOptions, 'card');
+            Html::removeCssClass($this->thumbOptions, 'thumb');
+        }
     }
 
     public function render($model, $key, $index)
@@ -123,29 +128,34 @@ abstract class Cell extends \yii\base\BaseObject
 
     protected function renderTools($model, $key, $index)
     {
-        $matchs = [];
-        if (!preg_match_all('/{(\w+)}/', $this->tools, $matchs)) {
-            return;
-        }
-
-        $align2icons = ['left' => '', '' => '', 'right' => ''];
-        foreach ($matchs[1] as $part) {
+        $align2icons = ['left' => '', '' => '',  'right' => ''];
+        foreach ((array) $this->tools as $tool) {
             $align = 'left';
-            if (isset($this->toolIconAlign[$part])) {
-                $align = $this->toolIconAlign[$part];
+            if (isset($this->toolIconAlign[$tool])) {
+                $align = $this->toolIconAlign[$tool];
             }
 
-            $method = "renderTool{$part}";
+            $method = "renderTool{$tool}";
             $align2icons[$align] .= $this->{$method}($model, $key, $index);
         }
 
         $str = '';
+        $bs5 = 5 == Html::getBootstrapVersion();
         foreach ($align2icons as $align => $icons) {
-            if ($align) {
-                $str .= Html::tag('div', $icons, ['class' => "pull-{$align}"]);
-            } else {
-                $str .= $icons;
+            if (!$icons) {
+                continue;
             }
+
+            if ($align) {
+                if ($bs5) {
+                    $align = 'left' == $align? 'start' : 'end';
+                }
+
+                $class = $bs5? "float-{$align}" : "pull-{$align}";
+                $icons = Html::tag('div', $icons, ['class' => $class]);
+            }
+
+            $str .= $icons;
         }
 
         $attrs = ['class' => 'tools clearfix'];
@@ -173,7 +183,7 @@ abstract class Cell extends \yii\base\BaseObject
 
     protected function renderToolMove($model, $key, $index)
     {
-        $attrs = ['data-role' => 'move', 'class' => 'text-primary'];
+        $attrs = ['data-role' => 'drag-icon', 'class' => 'text-primary'];
         return Html::icon('move', $attrs);
     }
 
@@ -189,15 +199,20 @@ abstract class Cell extends \yii\base\BaseObject
             $thumbUrl = $model->getThumbUrl($this->imgAttr, $this->thumbPreset);
             $originUrl = $model->getOriginUrl($this->imgAttr);
         } else {
-            Yii::$app->thumb->modelClass = $this->modelClass;
+            $fc = $this->modelClass;
+            $thumb = Yii::$app->thumb;
 
-            $thumbUrl = Yii::$app->thumb->getThumbUrl($model, $this->imgAttr,
-                            $this->thumbPreset);
-            $originUrl = Yii::$app->thumb->getOriginUrl($model, $this->imgAttr);
+            $thumbUrl = $thumb->getThumbUrl($model, $this->imgAttr, $this->thumbPreset, $fc);
+            $originUrl = $thumb->getUrl($model, $this->imgAttr, $fc);
+        }
+
+        $imageAttrs = [];
+        if (5 == Html::getBootstrapVersion()) {
+            Html::addCssClass($imageAttrs, 'img-thumbnail');
         }
 
         if ($thumbUrl) {
-           $img = Html::img($thumbUrl);
+           $img = Html::img($thumbUrl, $imageAttrs);
            $img = Html::a($img, $originUrl, ['target' => '_new']);
         } else {
            $img = Html::tag('img');
