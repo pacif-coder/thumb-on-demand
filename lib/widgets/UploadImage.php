@@ -2,10 +2,11 @@
 namespace ThumbOnDemand\widgets;
 
 use Yii;
-use yii\bootstrap\Html;
 use yii\widgets\ActiveForm;
+use yii\db\ActiveRecord;
 
 use ThumbOnDemand\assets\UploadImageAsset;
+use ThumbOnDemand\helpers\Html;
 
 /**
  *
@@ -18,6 +19,10 @@ class UploadImage extends \yii\widgets\InputWidget
     public $preset = 'thumb-1';
 
     public $altAttr = 'alt';
+
+    public $thumbNoBorder;
+
+    public $thumbBackgroundClass;
 
     public function init()
     {
@@ -37,7 +42,9 @@ class UploadImage extends \yii\widgets\InputWidget
             $this->field->form->options['enctype'] = 'multipart/form-data';
         }
 
-        if ($this->field->form->validationStateOn === ActiveForm::VALIDATION_STATE_ON_INPUT) {
+        $isBs3 = 3 == Html::getBootstrapVersion();
+        $validationInput = $this->field->form->validationStateOn === ActiveForm::VALIDATION_STATE_ON_INPUT;
+        if ($isBs3 && $validationInput) {
             $this->field->addErrorClassIfNeeded($this->options);
         }
 
@@ -58,8 +65,13 @@ class UploadImage extends \yii\widgets\InputWidget
         $str = '';
         $str .= Html::tag('div', $content, ['class' => 'select-panel']);
 
-        $thumbUrl = $this->model->getThumbUrl($this->attribute, $this->preset);
-        $originUrl = $this->model->getOriginUrl($this->attribute);
+        if (is_a($this->model, ActiveRecord::class) && $this->model->isNewRecord) {
+            $originUrl = $thumbUrl = null;
+        } else {
+            $thumbUrl = $this->model->getThumbUrl($this->attribute, $this->preset);
+            $originUrl = $this->model->getOriginUrl($this->attribute);
+        }
+
         $thumb = $this->getThumb($originUrl, $thumbUrl);
         $str .= Html::tag('div', $thumb, ['class' => 'single-image']);
 
@@ -86,11 +98,20 @@ class UploadImage extends \yii\widgets\InputWidget
     {
         $body = $this->getTools();
 
+        $attrs = [];
+        if ($this->thumbNoBorder) {
+            Html::addCssClass($attrs, 'no-border');
+        }
+
+        if ($this->thumbBackgroundClass) {
+            Html::addCssClass($attrs, $this->thumbBackgroundClass);
+        }
+
         if ($thumbUrl) {
-           $img = Html::img($thumbUrl);
+           $img = Html::img($thumbUrl, $attrs);
            $img = Html::a($img, $originUrl, ['target' => '_new']);
         } else {
-           $img = Html::tag('img');
+           $img = Html::tag('img', $attrs);
         }
 
         $attrs = ['class' => 'img'];
@@ -109,12 +130,16 @@ class UploadImage extends \yii\widgets\InputWidget
         $icons = '';
         if ($this->multiple) {
             $icon = Html::icon('move', ['class' => 'text-primary']);
-            $icons .= Html::tag('div', $icon, ['class' => 'pull-left']);
+
+            $align = 5 == Html::getBootstrapVersion()? 'float-start' : 'pull-left';
+            $icons .= Html::tag('div', $icon, ['class' => $align]);
         }
 
         $attrs = ['data-role' => 'remove', 'class' => 'text-danger'];
         $icon = Html::icon('remove', $attrs);
-        $icons .= Html::tag('div', $icon, ['class' => 'pull-right']);
+
+        $align = 5 == Html::getBootstrapVersion()? 'float-end' : 'pull-right';
+        $icons .= Html::tag('div', $icon, ['class' => $align]);
 
         $attrs = ['class' => 'tools clearfix'];
         return Html::tag('div', $icons, $attrs);
