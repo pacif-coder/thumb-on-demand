@@ -74,6 +74,11 @@ class Thumb extends File
     {
         parent::delete($object, $attr, $image, $forceModelClass);
 
+        $this->deleteThumbs($object, $attr, $image, $forceModelClass);
+    }
+
+    public function deleteThumbs($object, $attr, $image, $forceModelClass = false)
+    {
         foreach (array_keys($this->presets) as $preset) {
             $url = $this->_getThumbUrl($object, $attr, $image, $preset, $forceModelClass);
             $path = $this->_addWebRoot($url);
