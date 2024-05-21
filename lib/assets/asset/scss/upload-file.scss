@@ -1,13 +1,20 @@
-.widget-file-input {
-    padding-top: 5px;
-
+.widget-upload-file {
     a, a:visited, a:active {
         text-decoration: none;
     }
 
-    &.delete {
-        a, a:visited, a:active {
+    [data-role='remove'] {
+        cursor: pointer;
+    }
+
+    &.deleted {
+        a, a:visited, a:active, a:hover {
             text-decoration: line-through;
+        }
+
+        [data-role='remove'] {
+            cursor: default;
+            opacity: 50%;
         }
     }
 }

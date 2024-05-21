@@ -1,3 +1,1 @@
-.widget-file-input { padding-top: 5px; }
-.widget-file-input a, .widget-file-input a:visited, .widget-file-input a:active { text-decoration: none; }
-.widget-file-input.delete a, .widget-file-input.delete a:visited, .widget-file-input.delete a:active { text-decoration: line-through; }
+.widget-upload-file a,.widget-upload-file a:visited,.widget-upload-file a:active{text-decoration:none}.widget-upload-file [data-role=remove]{cursor:pointer}.widget-upload-file.deleted a,.widget-upload-file.deleted a:visited,.widget-upload-file.deleted a:active,.widget-upload-file.deleted a:hover{text-decoration:line-through}.widget-upload-file.deleted [data-role=remove]{cursor:default;opacity:50%}

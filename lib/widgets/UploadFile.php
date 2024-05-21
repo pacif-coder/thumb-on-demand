@@ -13,9 +13,32 @@ use ThumbOnDemand\assets\UploadFileAsset;
  */
 class UploadFile extends \yii\widgets\InputWidget
 {
+    public $nameAttr;
+
     public $withDelete = true;
 
-    public function init()
+    public $url;
+
+    public $containerDataRole = 'widget-upload-file';
+
+    public $containerClass = 'input-group widget-upload-file';
+
+    protected $dropInputAttrs = [
+        'data-role' => 'drop',
+        'disabled' => 'disabled',
+        'id' => null,
+        'value' => '',
+    ];
+
+    protected $fileInputAttrs = [
+        'data-role' => 'file',
+    ];
+
+    protected $trashButtonAttrs = [
+        'data-role' => 'remove',
+    ];
+
+     public function init()
     {
         parent::init();
 
@@ -44,43 +67,68 @@ class UploadFile extends \yii\widgets\InputWidget
             $this->field->addErrorClassIfNeeded($this->options);
         }
 
-        $link = $fileUpload = '';
-        $dropInputAttrs = ['data-role' => 'drop', 'disabled' => 'disabled', 'id' => null, 'value' => ''];
-        $fileInputAttrs = ['data-role' => 'file'];
-
+        $fileInputAttrs = $this->fileInputAttrs;
         if (isset($this->options['class'])) {
             Html::addCssClass($fileInputAttrs, $this->options['class']);
         }
 
+        $dropInput = $fileUpload = '';
         if ($this->hasModel()) {
-            $dropInput = Html::activeInput('hidden', $this->model, $this->attribute, $dropInputAttrs);
+            $dropInput = Html::activeInput('hidden', $this->model, $this->attribute, $this->dropInputAttrs);
             $fileInput = Html::activeInput('file', $this->model, $this->attribute, $fileInputAttrs);
         } else {
-            $dropInput = Html::input('hidden', $this->name, '', $dropInputAttrs);
+            $dropInput = Html::input('hidden', $this->name, '', $this->dropInputAttrs);
             $fileInput = Html::input('file', $this->name, '', $fileInputAttrs);
         }
 
-        $str = $dropInput;
-        $trashButtonAttrs = ['data-role' => 'remove', 'data-confirm' => Yii::t('yii', 'Delete') . '?'];
-        $value = Html::getAttributeValue($this->model, $this->attribute);
-        if ($this->hasModel() && $value) {
-            $link = Html::a($value, $this->model->getUrl($this->attribute), ['target' => '_new']);
+        $str = $fileInput . $dropInput . $this->getLinkTag() . $this->getTrashTag();
 
-            $trash = '';
-            if ($this->withDelete) {
-                $trashButtonAttrs['data-fill'] = 'true';
-                $trash = Html::tag('span', Html::icon('trash'), $trashButtonAttrs);
-            }
-
-            // $str .= Html::tag('div', $link . $trash);
-            $str .= $fileInput  . $link . $trash;
-        } else {
-            $trashButtonAttrs['class'] = 'hidden';
-            $trash = Html::tag('span', Html::icon('trash'), $trashButtonAttrs);
-
-            $str = $fileInput . $trash;
+        $attrs = ['data-role' => $this->containerDataRole, 'class' => $this->containerClass];
+        if ($this->nameAttr && $this->model) {
+            $attrs['data-name-attr-id'] = Html::getInputId($this->model, $this->nameAttr);
         }
 
-        echo Html::tag('div', $str, ['data-role' => 'widget-file-input', 'class' => 'widget-file-input']);
+        return Html::tag('div', $str, $attrs);
+    }
+
+    protected function getLinkTag()
+    {
+        if ($this->hasModel()) {
+            $value = Html::getAttributeValue($this->model, $this->attribute);
+        } else {
+            $value = $this->value;
+        }
+
+        if (!$value) {
+            return '';
+        }
+
+        $link = Html::a($value, $this->model->getUrl($this->attribute), ['target' => '_new']);
+        $link = Html::tag('span', $link, ['class' => 'text-truncate']);
+        return Html::tag('span', $link, ['class' => 'input-group-text w-50']);
+    }
+
+    protected function getTrashTag()
+    {
+        if (!$this->withDelete) {
+            return '';
+        }
+
+        if ($this->hasModel()) {
+            $value = Html::getAttributeValue($this->model, $this->attribute);
+        } else {
+            $value = $this->value;
+        }
+
+        if (!$value) {
+            return '';
+        }
+
+        $trashButtonAttrs = $this->trashButtonAttrs;
+        $trashButtonAttrs['data-confirm'] = Yii::t('yii', 'Delete') . '?';
+
+        $trash = Html::tag('span', Html::icon('trash'), $trashButtonAttrs);
+
+        return Html::tag('span', $trash, ['class' => 'input-group-text border-start-0']);
     }
 }
