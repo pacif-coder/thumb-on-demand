@@ -31,7 +31,14 @@ class UploadFileBehavior extends \yii\base\Behavior
         foreach ((array) $this->attr as $attr) {
             $old = $this->owner->getOldAttribute($attr);
             $new = $this->owner->getAttribute($attr);
-            $uploaded = UploadedFile::getInstance($this->owner, $attr);
+
+            // if for some reason the attribute value is already an object of UploadedFile class - use it
+            // it can be useful for manual assignment of an uploaded file
+            if ($new && is_a($new, UploadedFile::class)) {
+                $uploaded = $new;
+            } else {
+                $uploaded = UploadedFile::getInstance($this->owner, $attr);
+            }
 
             if ($uploaded && $uploaded->error) {
                 $error = Yii::t('yii', 'File upload failed.');
@@ -48,7 +55,7 @@ class UploadFileBehavior extends \yii\base\Behavior
                 continue;
             }
 
-            $this->owner->{$attr} = $uploaded;
+            $this->owner->setAttribute($attr, $uploaded);
             $this->uploaded[] = $attr;
         }
     }
